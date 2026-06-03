@@ -1,0 +1,16 @@
+/*
+ * &caps_ind — caps-word that also drives the dongle-screen caps-word widget.
+ * Include this from the dongle keymap/overlay, then use &caps_ind in place of
+ * &caps_word. continue-list mirrors the user's &caps (adds MINUS so FOO-BAR /
+ * FOO_BAR stay capped).
+ */
+
+/ {
+    behaviors {
+        caps_ind: behavior_caps_word_ind {
+            compatible = "zmk,behavior-caps-word-ind";
+            #binding-cells = <0>;
+            continue-list = <UNDERSCORE MINUS BACKSPACE DELETE>;
+        };
+    };
+};

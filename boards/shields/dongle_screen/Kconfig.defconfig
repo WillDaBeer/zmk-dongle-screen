@@ -151,6 +151,14 @@ config DONGLE_SCREEN_MODIFIER_ACTIVE
     help
       If the Modifier Widget should be active or not
 
+config DONGLE_SCREEN_CAPSWORD_ACTIVE
+    bool "Caps-word Widget active"
+    default n
+    help
+      Show a caps-word indicator. Requires using the &caps_ind behavior
+      (from this module's dts/behaviors/caps_word_ind.dtsi) in the keymap
+      instead of &caps_word, so the widget can read its active state.
+
 config DONGLE_SCREEN_LAYER_ACTIVE
     bool "Layer Widget active"
     default y
