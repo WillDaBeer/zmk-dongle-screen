@@ -29,7 +29,11 @@ static struct k_timer caps_word_status_timer;
 int zmk_widget_caps_word_status_init(struct zmk_widget_caps_word_status *widget, lv_obj_t *parent)
 {
     widget->obj = lv_obj_create(parent);
-    lv_obj_set_size(widget->obj, 60, 40);
+    lv_obj_set_size(widget->obj, 48, 48);
+    // Transparent, borderless, no padding — just the glyph, no box.
+    lv_obj_set_style_bg_opa(widget->obj, LV_OPA_TRANSP, 0);
+    lv_obj_set_style_border_width(widget->obj, 0, 0);
+    lv_obj_set_style_pad_all(widget->obj, 0, 0);
 
     widget->label = lv_label_create(widget->obj);
     lv_obj_align(widget->label, LV_ALIGN_CENTER, 0, 0);
