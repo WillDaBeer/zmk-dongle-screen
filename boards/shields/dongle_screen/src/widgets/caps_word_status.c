@@ -3,18 +3,19 @@
 #include <lvgl.h>
 #include "caps_word_status.h"
 #include "caps_word_ind.h"
+#include <fonts.h> // NerdFont declarations (NerdFonts_Regular_40)
 
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
-// The bundled NerdFonts_Regular_40 has no caps glyph (and no ASCII letters),
-// so render plain text in lv_font_montserrat_40 (full ASCII, same font the
-// layer widget uses). Shown when caps-word is active, blank when inactive.
-#define CAPS_WORD_TEXT "CAPS"
+// Shift glyph (U+F0636) — the same icon the modifier widget uses for Shift,
+// so caps-word reads as the shift-lock state it is, in the mod widget's visual
+// language. Confirmed present in the bundled NerdFonts_Regular_40.
+#define CAPS_WORD_GLYPH "󰘶"
 
 static void update_caps_word_status(struct zmk_widget_caps_word_status *widget)
 {
     bool active = caps_word_ind_is_active();
-    lv_label_set_text(widget->label, active ? CAPS_WORD_TEXT : "");
+    lv_label_set_text(widget->label, active ? CAPS_WORD_GLYPH : "");
 }
 
 static void caps_word_status_timer_cb(struct k_timer *timer)
@@ -33,7 +34,7 @@ int zmk_widget_caps_word_status_init(struct zmk_widget_caps_word_status *widget,
     widget->label = lv_label_create(widget->obj);
     lv_obj_align(widget->label, LV_ALIGN_CENTER, 0, 0);
     lv_label_set_text(widget->label, "");
-    lv_obj_set_style_text_font(widget->label, &lv_font_montserrat_40, 0);
+    lv_obj_set_style_text_font(widget->label, &NerdFonts_Regular_40, 0);
     lv_obj_set_style_text_color(widget->label, lv_color_white(), 0);
 
     k_timer_init(&caps_word_status_timer, caps_word_status_timer_cb, NULL);

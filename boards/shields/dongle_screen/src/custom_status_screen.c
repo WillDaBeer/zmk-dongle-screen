@@ -83,7 +83,9 @@ lv_obj_t *zmk_display_status_screen()
 
 #if CONFIG_DONGLE_SCREEN_CAPSWORD_ACTIVE
     zmk_widget_caps_word_status_init(&caps_word_widget, screen);
-    lv_obj_align(zmk_widget_caps_word_status_obj(&caps_word_widget), LV_ALIGN_TOP_RIGHT, -20, 20);
+    // Top-left, under the WPM widget (WPM is TOP_LEFT 20,20, height ~77).
+    // Top-right is occupied by the output (USB/BLE) selector.
+    lv_obj_align(zmk_widget_caps_word_status_obj(&caps_word_widget), LV_ALIGN_TOP_LEFT, 20, 90);
 #endif
 
     return screen;
