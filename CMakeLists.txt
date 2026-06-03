@@ -7,10 +7,9 @@ if(CONFIG_SHIELD_DONGLE_SCREEN)
 
 endif()
 
-# Caps-word-with-state behavior — compiled into the ZMK app on the central
-# (dongle) only, where the keymap runs. Mirrors the proven external-behavior
-# pattern (dhruvinsh/zmk-tri-state).
-if((NOT CONFIG_ZMK_SPLIT) OR CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
-        target_sources_ifdef(CONFIG_ZMK_BEHAVIOR_CAPS_WORD_IND app PRIVATE
-                ${ZEPHYR_CURRENT_MODULE_DIR}/behaviors/behavior_caps_word_ind.c)
-endif()
+# Caps-word-with-state behavior. Compiled into the ZMK app for EVERY role that
+# parses the (shared) keymap — central, peripheral, settings_reset — so a build
+# that sees &caps_ind always has the driver. Peripherals don't use it; cost is
+# negligible. Pattern from dhruvinsh/zmk-tri-state (minus the role gate).
+target_sources_ifdef(CONFIG_ZMK_BEHAVIOR_CAPS_WORD_IND app PRIVATE
+        ${ZEPHYR_CURRENT_MODULE_DIR}/behaviors/behavior_caps_word_ind.c)
