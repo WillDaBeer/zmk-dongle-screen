@@ -86,7 +86,7 @@ lv_obj_t *zmk_display_status_screen()
     // Tight top-left, directly under the WPM number (WPM text sits at the very
     // top ~y0-40). Top-right is the output (USB/BLE) selector; center is the
     // layer name — keep clear of both.
-    lv_obj_align(zmk_widget_caps_word_status_obj(&caps_word_widget), LV_ALIGN_TOP_LEFT, 20, 48);
+    lv_obj_align(zmk_widget_caps_word_status_obj(&caps_word_widget), LV_ALIGN_TOP_LEFT, 4, 48);
 #endif
 
     return screen;
