@@ -9,13 +9,20 @@
 
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
-// One glyph for both states (U+F0636, the shift icon the mod widget uses).
-// Using a single glyph keeps the height constant, so neither state can overrun
-// into the WPM widget above (the dedicated caps-lock glyph U+F0632 was 29px vs
-// this glyph's 20px and collided). Caps-lock is distinguished by a thin box
-// drawn on the LABEL (which wraps the glyph tightly) — not the 48px container —
-// so the box stays within the glyph's footprint and shifts nothing.
-#define CAPS_GLYPH "󰘶"
+// Two distinct NerdFont glyphs (both in the bundled NerdFonts_Regular_40 subset):
+//   caps-word -> shift glyph     U+F0636  (box_h=20, ofs_y=4)
+//   caps-lock -> caps-lock glyph U+F0632  (box_h=29, ofs_y=0 — 9px taller, and
+//                its top sits 4px higher than the shift glyph)
+#define CAPS_WORD_GLYPH "󰘶"
+#define CAPS_LOCK_GLYPH "󰘲"
+
+// The caps-lock glyph is taller and its top sits higher, so left centered it
+// overruns UP into the WPM widget. Instead, shift it DOWN when caps-lock is on
+// so its arrow TIP aligns with the shift glyph's tip and the extra height hangs
+// downward into open space. Both glyphs are centered in the 48px box by default;
+// nudging the caps-lock label down by ~ (height diff)/2 + (ofs_y diff) lines the
+// tops up. Start at 7px; tune on-device.
+#define CAPS_LOCK_Y_NUDGE 7
 
 // HID keyboard LED report: Num=0x01, Caps=0x02, Scroll=0x04 (USB HID spec).
 // Same constant the zmk-dongle-display hid_indicators widget uses (LED_CLCK).
@@ -26,17 +33,19 @@ static bool caps_lock_active(void)
     return (zmk_hid_indicators_get_current_profile() & LED_CAPS_LOCK) != 0;
 }
 
-// caps-lock -> glyph + thin box; caps-word -> glyph, no box; else blank.
-// Caps-lock takes priority if both are somehow active.
+// caps-lock -> caps-lock glyph nudged down (tips align); caps-word -> shift
+// glyph centered; else blank. Caps-lock wins if both are somehow active.
 static void update_caps_word_status(struct zmk_widget_caps_word_status *widget)
 {
     bool lock = caps_lock_active();
     bool show = lock || caps_word_ind_is_active();
 
-    lv_label_set_text(widget->label, show ? CAPS_GLYPH : "");
-    // Box only for caps-lock: flip the label's 1px border on. With 0 pad (set in
-    // init) it draws flush to the glyph, adding no height -> can't reach WPM.
-    lv_obj_set_style_border_width(widget->label, lock ? 1 : 0, 0);
+    lv_label_set_text(widget->label, lock ? CAPS_LOCK_GLYPH
+                                   : show ? CAPS_WORD_GLYPH
+                                   : "");
+    // Push the taller caps-lock glyph down so its tip aligns with the shift
+    // glyph's tip and its extra height hangs below (away from WPM).
+    lv_obj_align(widget->label, LV_ALIGN_CENTER, 0, lock ? CAPS_LOCK_Y_NUDGE : 0);
 }
 
 static void caps_word_status_timer_cb(struct k_timer *timer)
@@ -62,15 +71,8 @@ int zmk_widget_caps_word_status_init(struct zmk_widget_caps_word_status *widget,
     lv_label_set_text(widget->label, "");
     lv_obj_set_style_text_font(widget->label, &NerdFonts_Regular_40, 0);
     lv_obj_set_style_text_color(widget->label, lv_color_white(), 0);
-    // Box style for caps-lock, pre-set on the label. ZERO padding so the 1px
-    // border draws flush to the glyph's own bounding box and adds no vertical
-    // space beyond the glyph (which is the same height as the caps-word glyph).
-    // This is what keeps caps-lock from extending up into the WPM widget. Width
-    // 0 here; update_caps_word_status() flips it to 1 for caps-lock only.
-    lv_obj_set_style_border_color(widget->label, lv_color_white(), 0);
-    lv_obj_set_style_radius(widget->label, 2, 0);
-    lv_obj_set_style_pad_all(widget->label, 0, 0);
-    lv_obj_set_style_border_width(widget->label, 0, 0);
+    // No box — caps-lock is distinguished by its own (taller) glyph, nudged
+    // down so it grows away from WPM (see update_caps_word_status()).
 
     k_timer_init(&caps_word_status_timer, caps_word_status_timer_cb, NULL);
     k_timer_user_data_set(&caps_word_status_timer, widget);
