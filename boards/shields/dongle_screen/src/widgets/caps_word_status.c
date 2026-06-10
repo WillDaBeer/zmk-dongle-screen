@@ -9,12 +9,13 @@
 
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
-// Two distinct NerdFont glyphs, both confirmed present in the bundled
-// NerdFonts_Regular_40 subset:
-//   caps-word -> shift glyph    U+F0636 (the icon the mod widget uses for Shift)
-//   caps-lock -> caps-lock glyph U+F0632 (apple-keyboard-caps)
-#define CAPS_WORD_GLYPH "󰘶"
-#define CAPS_LOCK_GLYPH "󰘲"
+// One glyph for both states (U+F0636, the shift icon the mod widget uses).
+// Using a single glyph keeps the height constant, so neither state can overrun
+// into the WPM widget above (the dedicated caps-lock glyph U+F0632 was 29px vs
+// this glyph's 20px and collided). Caps-lock is distinguished by a thin box
+// drawn on the LABEL (which wraps the glyph tightly) — not the 48px container —
+// so the box stays within the glyph's footprint and shifts nothing.
+#define CAPS_GLYPH "󰘶"
 
 // HID keyboard LED report: Num=0x01, Caps=0x02, Scroll=0x04 (USB HID spec).
 // Same constant the zmk-dongle-display hid_indicators widget uses (LED_CLCK).
@@ -25,14 +26,17 @@ static bool caps_lock_active(void)
     return (zmk_hid_indicators_get_current_profile() & LED_CAPS_LOCK) != 0;
 }
 
-// caps-lock -> caps-lock glyph; else caps-word -> shift glyph; else blank.
-// Caps-lock takes priority if both are somehow active. No box.
+// caps-lock -> glyph + thin box; caps-word -> glyph, no box; else blank.
+// Caps-lock takes priority if both are somehow active.
 static void update_caps_word_status(struct zmk_widget_caps_word_status *widget)
 {
-    const char *glyph = caps_lock_active() ? CAPS_LOCK_GLYPH
-                      : caps_word_ind_is_active() ? CAPS_WORD_GLYPH
-                      : "";
-    lv_label_set_text(widget->label, glyph);
+    bool lock = caps_lock_active();
+    bool show = lock || caps_word_ind_is_active();
+
+    lv_label_set_text(widget->label, show ? CAPS_GLYPH : "");
+    // Box only for caps-lock, on the label (tight to the glyph). 1px border, no
+    // pad change -> the glyph does not move; the box hugs it.
+    lv_obj_set_style_border_width(widget->label, lock ? 1 : 0, 0);
 }
 
 static void caps_word_status_timer_cb(struct k_timer *timer)
@@ -47,8 +51,8 @@ int zmk_widget_caps_word_status_init(struct zmk_widget_caps_word_status *widget,
 {
     widget->obj = lv_obj_create(parent);
     lv_obj_set_size(widget->obj, 48, 48);
-    // Transparent, borderless, no padding — just the glyph, no box. (caps-word
-    // and caps-lock are now distinguished by different glyphs, not a box.)
+    // Container stays transparent/borderless — the box (for caps-lock) is drawn
+    // on the label instead, so it hugs the glyph and never grows this 48px box.
     lv_obj_set_style_bg_opa(widget->obj, LV_OPA_TRANSP, 0);
     lv_obj_set_style_border_width(widget->obj, 0, 0);
     lv_obj_set_style_pad_all(widget->obj, 0, 0);
@@ -58,6 +62,13 @@ int zmk_widget_caps_word_status_init(struct zmk_widget_caps_word_status *widget,
     lv_label_set_text(widget->label, "");
     lv_obj_set_style_text_font(widget->label, &NerdFonts_Regular_40, 0);
     lv_obj_set_style_text_color(widget->label, lv_color_white(), 0);
+    // Box style for caps-lock, pre-set on the label: white border + small radius
+    // + 1px pad so the box hugs the glyph with a hair of breathing room. Width 0
+    // here; update_caps_word_status() flips it to 1 for caps-lock only.
+    lv_obj_set_style_border_color(widget->label, lv_color_white(), 0);
+    lv_obj_set_style_radius(widget->label, 2, 0);
+    lv_obj_set_style_pad_all(widget->label, 1, 0);
+    lv_obj_set_style_border_width(widget->label, 0, 0);
 
     k_timer_init(&caps_word_status_timer, caps_word_status_timer_cb, NULL);
     k_timer_user_data_set(&caps_word_status_timer, widget);
