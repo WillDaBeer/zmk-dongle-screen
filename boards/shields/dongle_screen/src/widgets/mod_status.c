@@ -90,7 +90,14 @@ int zmk_widget_mod_status_init(struct zmk_widget_mod_status *widget, lv_obj_t *p
     lv_obj_set_size(widget->obj, 180, 40);
 
     widget->label = lv_label_create(widget->obj);
+    // Fixed-width label filling the container, with text centered INSIDE it. The
+    // label box does not move as content changes (unlike an auto-width
+    // LV_ALIGN_CENTER label, which re-centers by its measured width and shoved
+    // content off-screen left when the caps span was added); only the text
+    // re-centers within the fixed box.
+    lv_obj_set_width(widget->label, 180);
     lv_obj_align(widget->label, LV_ALIGN_CENTER, 0, 0);
+    lv_obj_set_style_text_align(widget->label, LV_TEXT_ALIGN_CENTER, 0);
     lv_label_set_recolor(widget->label, true); // enable #RRGGBB ...# spans
     lv_label_set_text(widget->label, "");
     lv_obj_set_style_text_font(widget->label, &NerdFonts_Regular_40, 0); // <-- NerdFont setzen
