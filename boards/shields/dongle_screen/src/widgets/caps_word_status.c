@@ -34,8 +34,8 @@ static void update_caps_word_status(struct zmk_widget_caps_word_status *widget)
     bool show = lock || caps_word_ind_is_active();
 
     lv_label_set_text(widget->label, show ? CAPS_GLYPH : "");
-    // Box only for caps-lock, on the label (tight to the glyph). 1px border, no
-    // pad change -> the glyph does not move; the box hugs it.
+    // Box only for caps-lock: flip the label's 1px border on. With 0 pad (set in
+    // init) it draws flush to the glyph, adding no height -> can't reach WPM.
     lv_obj_set_style_border_width(widget->label, lock ? 1 : 0, 0);
 }
 
@@ -62,12 +62,14 @@ int zmk_widget_caps_word_status_init(struct zmk_widget_caps_word_status *widget,
     lv_label_set_text(widget->label, "");
     lv_obj_set_style_text_font(widget->label, &NerdFonts_Regular_40, 0);
     lv_obj_set_style_text_color(widget->label, lv_color_white(), 0);
-    // Box style for caps-lock, pre-set on the label: white border + small radius
-    // + 1px pad so the box hugs the glyph with a hair of breathing room. Width 0
-    // here; update_caps_word_status() flips it to 1 for caps-lock only.
+    // Box style for caps-lock, pre-set on the label. ZERO padding so the 1px
+    // border draws flush to the glyph's own bounding box and adds no vertical
+    // space beyond the glyph (which is the same height as the caps-word glyph).
+    // This is what keeps caps-lock from extending up into the WPM widget. Width
+    // 0 here; update_caps_word_status() flips it to 1 for caps-lock only.
     lv_obj_set_style_border_color(widget->label, lv_color_white(), 0);
     lv_obj_set_style_radius(widget->label, 2, 0);
-    lv_obj_set_style_pad_all(widget->label, 1, 0);
+    lv_obj_set_style_pad_all(widget->label, 0, 0);
     lv_obj_set_style_border_width(widget->label, 0, 0);
 
     k_timer_init(&caps_word_status_timer, caps_word_status_timer_cb, NULL);
