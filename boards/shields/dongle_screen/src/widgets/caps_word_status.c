@@ -21,8 +21,8 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 // so its arrow TIP aligns with the shift glyph's tip and the extra height hangs
 // downward into open space. Both glyphs are centered in the 48px box by default;
 // nudging the caps-lock label down by ~ (height diff)/2 + (ofs_y diff) lines the
-// tops up. Start at 7px; tune on-device.
-#define CAPS_LOCK_Y_NUDGE 7
+// tops up. 6px aligns the tips on-device (7 was 1px too low).
+#define CAPS_LOCK_Y_NUDGE 6
 
 // HID keyboard LED report: Num=0x01, Caps=0x02, Scroll=0x04 (USB HID spec).
 // Same constant the zmk-dongle-display hid_indicators widget uses (LED_CLCK).
