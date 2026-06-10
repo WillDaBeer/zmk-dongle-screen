@@ -76,7 +76,9 @@ lv_obj_t *zmk_display_status_screen()
 
 #if CONFIG_DONGLE_SCREEN_MODIFIER_ACTIVE
     zmk_widget_mod_status_init(&mod_widget, screen);
-    lv_obj_align(zmk_widget_mod_status_obj(&mod_widget), LV_ALIGN_CENTER, 0, 35);
+    // +38 (was 35): nudged down a few px so the tall caps glyph clears the
+    // layer name above it.
+    lv_obj_align(zmk_widget_mod_status_obj(&mod_widget), LV_ALIGN_CENTER, 0, 38);
 #endif
 
     // Caps-word / caps-lock are now shown inside the modifiers widget (a green
