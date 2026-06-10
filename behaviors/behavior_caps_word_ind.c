@@ -7,7 +7,7 @@
  * Verbatim copy of ZMK's behavior_caps_word.c with:
  *   - compatible renamed to zmk,behavior-caps-word-ind (coexists with stock &caps_word)
  *   - a module-global `caps_word_ind_active` flag set in activate/deactivate
- *   - getter caps_word_ind_is_active() consumed by the caps_word_status widget
+ *   - getter caps_word_ind_is_active() consumed by the mod_status widget
  * Keep in sync with upstream behavior_caps_word.c on YADS/ZMK bumps.
  */
 
@@ -31,7 +31,7 @@
 
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
-/* Module-global state polled by the caps_word_status widget. With a single
+/* Module-global state polled by the mod_status widget. With a single
  * &caps_ind instance (our case) this tracks it directly. */
 static bool caps_word_ind_active_flag = false;
 

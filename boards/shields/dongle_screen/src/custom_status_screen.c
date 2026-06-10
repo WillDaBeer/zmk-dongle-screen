@@ -31,10 +31,8 @@ static struct zmk_widget_wpm_status wpm_status_widget;
 static struct zmk_widget_mod_status mod_widget;
 #endif
 
-#if CONFIG_DONGLE_SCREEN_CAPSWORD_ACTIVE
-#include "widgets/caps_word_status.h"
-static struct zmk_widget_caps_word_status caps_word_widget;
-#endif
+// Caps-word/caps-lock indication moved into the modifiers widget
+// (mod_status.c); the standalone caps_word_status widget is no longer placed.
 
 #include <zephyr/logging/log.h>
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
@@ -78,16 +76,16 @@ lv_obj_t *zmk_display_status_screen()
 
 #if CONFIG_DONGLE_SCREEN_MODIFIER_ACTIVE
     zmk_widget_mod_status_init(&mod_widget, screen);
-    lv_obj_align(zmk_widget_mod_status_obj(&mod_widget), LV_ALIGN_CENTER, 0, 35);
+    // +38 (was 35): nudged down a few px so the tall caps glyph clears the
+    // layer name above it.
+    lv_obj_align(zmk_widget_mod_status_obj(&mod_widget), LV_ALIGN_CENTER, 0, 38);
 #endif
 
-#if CONFIG_DONGLE_SCREEN_CAPSWORD_ACTIVE
-    zmk_widget_caps_word_status_init(&caps_word_widget, screen);
-    // Tight top-left, directly under the WPM number (WPM text sits at the very
-    // top ~y0-40). Top-right is the output (USB/BLE) selector; center is the
-    // layer name — keep clear of both.
-    lv_obj_align(zmk_widget_caps_word_status_obj(&caps_word_widget), LV_ALIGN_TOP_LEFT, 3, 33);
-#endif
+    // Caps-word / caps-lock are now shown inside the modifiers widget (a green
+    // or white caps glyph after the modifier row) rather than as a standalone
+    // widget. The old standalone caps_word_status widget is no longer placed on
+    // the screen. CONFIG_DONGLE_SCREEN_CAPSWORD_ACTIVE still gates the feature,
+    // handled in mod_status.c.
 
     return screen;
 }

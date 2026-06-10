@@ -3,5 +3,5 @@
 #include <stdbool.h>
 
 /* True while the &caps_ind caps-word behavior is active. Polled by the
- * caps_word_status dongle-screen widget. */
+ * modifiers (mod_status) dongle-screen widget to colour its caps glyph. */
 bool caps_word_ind_is_active(void);
