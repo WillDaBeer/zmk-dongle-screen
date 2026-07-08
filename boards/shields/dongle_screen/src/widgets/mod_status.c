@@ -1,3 +1,4 @@
+#include <string.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 #include <zmk/hid.h>
@@ -73,16 +74,25 @@ static void update_mod_status(struct zmk_widget_mod_status *widget)
     }
 #endif
 
-    lv_label_set_text(widget->label, idx ? text : "");
+    // Only touch LVGL when the content actually changed — lv_label_set_text
+    // reallocates the label buffer on every call, even for identical text.
+    static char last_text[sizeof(text)] = "";
+    if (strcmp(text, last_text) == 0)
+        return;
+    strcpy(last_text, text);
+
+    lv_label_set_text(widget->label, text);
 }
 
-static void mod_status_timer_cb(struct k_timer *timer)
+// LVGL timer, NOT k_timer: k_timer callbacks run in ISR context, and calling
+// LVGL from there races the display thread's lv_task_handler() (heap/object
+// corruption -> random dongle freeze). lv_timer callbacks run inside
+// lv_task_handler() on the display thread, where LVGL calls are safe.
+static void mod_status_lv_timer_cb(lv_timer_t *timer)
 {
-    struct zmk_widget_mod_status *widget = k_timer_user_data_get(timer);
+    struct zmk_widget_mod_status *widget = timer->user_data;
     update_mod_status(widget);
 }
-
-static struct k_timer mod_status_timer;
 
 int zmk_widget_mod_status_init(struct zmk_widget_mod_status *widget, lv_obj_t *parent)
 {
@@ -102,9 +112,7 @@ int zmk_widget_mod_status_init(struct zmk_widget_mod_status *widget, lv_obj_t *p
     lv_label_set_text(widget->label, "");
     lv_obj_set_style_text_font(widget->label, &NerdFonts_Regular_40, 0); // <-- NerdFont setzen
 
-    k_timer_init(&mod_status_timer, mod_status_timer_cb, NULL);
-    k_timer_user_data_set(&mod_status_timer, widget);
-    k_timer_start(&mod_status_timer, K_MSEC(100), K_MSEC(100));
+    lv_timer_create(mod_status_lv_timer_cb, 100, widget);
 
     return 0;
 }
